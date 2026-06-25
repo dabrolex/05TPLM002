@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProPOS - Aplikasi Kasir</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div id="app" class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col p-6">
+            <h1 class="text-2xl font-bold mb-10 flex items-center gap-2">
+                <i data-lucide="shopping-cart" class="text-indigo-400"></i> ProPOS
+            </h1>
+            <nav class="space-y-4">
+                <button onclick="changeTab('dashboard')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-lg bg-indigo-600">
+                    <i data-lucide="layout-dashboard" size="20"></i> Dashboard
+                </button>
+                <button onclick="changeTab('pos')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800">
+                    <i data-lucide="shopping-cart" size="20"></i> Kasir
+                </button>
+                <button onclick="changeTab('history')" class="nav-btn w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800">
+                    <i data-lucide="history" size="20"></i> Riwayat
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <header class="mb-8">
+                <h2 id="tab-title" class="text-2xl font-bold text-slate-800 capitalize">Dashboard</h2>
+            </header>
+
+            <div id="content-area"></div>
+        </main>
+    </div>
+
+    <script>
+        const INITIAL_PRODUCTS = [
+            { id: 1, name: 'Kopi Espresso', price: 25000, stock: 50 },
+            { id: 2, name: 'Croissant Butter', price: 18000, stock: 30 },
+            { id: 3, name: 'Latte Art', price: 30000, stock: 40 },
+            { id: 4, name: 'Sandwich Ayam', price: 35000, stock: 20 },
+        ];
+
+        let state = {
+            activeTab: 'dashboard',
+            products: INITIAL_PRODUCTS,
+            cart: [],
+            transactions: []
+        };
+
+        function changeTab(tab) {
+            state.activeTab = tab;
+            document.getElementById('tab-title').innerText = tab;
+            render();
+        }
+
+        function addToCart(productId) {
+            const product = state.products.find(p => p.id === productId);
+            const existing = state.cart.find(item => item.id === productId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                state.cart.push({ ...product, qty: 1 });
+            }
+            render();
+        }
+
+        function handleCheckout() {
+            const total = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            state.transactions.push({ id: Date.now(), date: new Date().toLocaleTimeString(), total, items: [...state.cart] });
+            state.cart = [];
+            alert('Transaksi Berhasil!');
+            render();
+        }
+
+        function render() {
+            const content = document.getElementById('content-area');
+            if (state.activeTab === 'dashboard') {
+                content.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-slate-500 font-medium">Total Penjualan</h3>
+                            <p class="text-3xl font-bold">Rp ${state.transactions.reduce((acc, t) => acc + t.total, 0).toLocaleString()}</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-slate-500 font-medium">Total Transaksi</h3>
+                            <p class="text-3xl font-bold">${state.transactions.length}</p>
+                        </div>
+                    </div>`;
+            } else if (state.activeTab === 'pos') {
+                content.innerHTML = `
+                    <div class="grid grid-cols-3 gap-6">
+                        <div class="col-span-2 grid grid-cols-2 gap-4">
+                            ${state.products.map(p => `
+                                <button onclick="addToCart(${p.id})" class="p-4 bg-white rounded-lg border shadow-sm">
+                                    <h4 class="font-bold">${p.name}</h4>
+                                    <p class="text-indigo-600">Rp ${p.price.toLocaleString()}</p>
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border">
+                            <h3 class="font-bold mb-4">Keranjang</h3>
+                            ${state.cart.map(item => `<div class="flex justify-between">${item.name} x ${item.qty}</div>`).join('')}
+                            <button onclick="handleCheckout()" class="w-full mt-4 bg-indigo-600 text-white py-2 rounded">Bayar</button>
+                        </div>
+                    </div>`;
+            } else {
+                content.innerHTML = `
+                    <div class="bg-white p-6 rounded-xl border">
+                        <table class="w-full text-left">
+                            ${state.transactions.map(t => `<tr><td>${t.date}</td><td>Rp ${t.total.toLocaleString()}</td></tr>`).join('')}
+                        </table>
+                    </div>`;
+            }
+            lucide.createIcons();
+        }
+
+        render();
+    </script>
+</body>
+</html>
